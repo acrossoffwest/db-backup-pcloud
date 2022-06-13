@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: scripts/changes.sql
+      relativeToChangelogFile: true
+  - include:
+      file: scripts/add-cron-column.sql
+      relativeToChangelogFile: true

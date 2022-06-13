@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authorization</title>
+    <script>
+        try {
+            const url = document.location.href;
+            if (url.includes('#access_token')) {
+                document.location.href = url.replace('#access_token', 'token?access_token')
+            }
+        } catch (e) {
+            console.error(e);
+            document.querySelector("#message").innerHTML = 'Something went wrong.'
+        }
+    </script>
+</head>
+<body>
+    <h1>You will redirected, wait.</h1>
+    <p style="color: red" id="message"></p>
+</body>
+</html>

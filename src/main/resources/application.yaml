@@ -1,0 +1,31 @@
+server:
+  port: ${APP_PORT:9080}
+
+pcloud:
+  oauth:
+    clientID: ${PCLOUD_OAUTH_CLIENT_ID}
+    callbackUrl: ${PCLOUD_OAUTH_CALLBACK_URL}
+
+
+
+spring:
+  application.name: db-backuper
+
+  codec:
+    max-in-memory-size: 100MB
+
+  liquibase:
+    url: jdbc:${DB_DRIVER:mysql}://${DB_HOST:localhost}:${DB_PORT:4408}/${DB_NAME:forge}
+    driver-class-name: com.mysql.jdbc.Driver
+    user: ${DB_USERNAME:forge}
+    password: ${DB_PASSWORD:secret}
+    change-log: classpath:db/changelog/scripts/changes.sql
+
+  jpa:
+    show-sql: true
+
+  datasource:
+    url: jdbc:${DB_DRIVER:mysql}://${DB_HOST:localhost}:${DB_PORT:4408}/${DB_NAME:forge}
+    username: ${DB_USERNAME:forge}
+    password: ${DB_PASSWORD:secret}
+    driver-class-name: com.mysql.jdbc.Driver

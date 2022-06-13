@@ -1,0 +1,7 @@
+changeLogFile: src/main/resources/db/changelog/liquibase-changelog.yaml
+
+#Local
+driver: org.mariadb.jdbc.Driver
+url: jdbc:mariadb://localhost:4407/forge?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Europe/Moscow
+username: forge
+password: secret

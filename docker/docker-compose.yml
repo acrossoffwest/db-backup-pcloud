@@ -1,0 +1,23 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0-oracle
+    restart: ${APP_RESTART}
+    ports:
+      - ${DB_PORT:-4407}:3306
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USERNAME}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    networks:
+      - server
+
+networks:
+  server:
+
+volumes:
+  db:
