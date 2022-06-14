@@ -1,6 +1,25 @@
 version: '3.9'
 
 services:
+  app:
+    build: ../
+    platform: linux/amd64
+    restart: ${APP_RESTART}
+    ports:
+      - ${APP_PORT:-4407}:${APP_PORT:-4407}
+    environment:
+      APP_NAME: "${APP_NAME}"
+      APP_PORT: "${APP_PORT}"
+      DB_NAME: "${DB_NAME}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "${DB_PORT}"
+      PCLOUD_OAUTH_CLIENT_ID: "${PCLOUD_OAUTH_CLIENT_ID}"
+      PCLOUD_OAUTH_CALLBACK_URL: "${PCLOUD_OAUTH_CALLBACK_URL}"
+    networks:
+      - server
+
   db:
     image: mysql:8.0-oracle
     restart: ${APP_RESTART}

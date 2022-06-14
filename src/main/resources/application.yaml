@@ -9,7 +9,7 @@ pcloud:
 
 
 spring:
-  application.name: db-backuper
+  application.name: ${APP_NAME:db-backuper}
 
   codec:
     max-in-memory-size: 100MB
