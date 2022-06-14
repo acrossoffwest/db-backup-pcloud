@@ -42,11 +42,12 @@ public class BackupService {
     public void run() {
         if (pCloudAPIAuth.isAuthorized()) {
             var now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+            var localDateTimeForNext = LocalDateTime.now().minus(10, ChronoUnit.SECONDS);
             Flux.fromIterable(sourceRepository.findAll())
                     .filter(source -> Objects.nonNull(source.getCron()))
                     .filter(source -> {
                         var expression = CronExpression.parse(source.getCron());
-                        var next = expression.next(LocalDateTime.now().minus(10, ChronoUnit.SECONDS));
+                        var next = expression.next(localDateTimeForNext);
                         log.info("Now: %s == Next: %s".formatted(now, next));
                         return now.equals(next);
                     })
