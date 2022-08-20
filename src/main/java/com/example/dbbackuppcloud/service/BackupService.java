@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.io.File;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 import java.util.Properties;
@@ -50,8 +51,8 @@ public class BackupService {
                     log.info("Now: %s == Next: %s".formatted(now, next));
                     return now.equals(next);
                 })
-                .flatMap(this::backupAsync)
-                .flatMap(this::uploadToCloudAsync)
+                .flatMap(source -> Mono.zip(Mono.just(source), backupAsync(source)))
+                .flatMap(tuple2 -> uploadToCloudAsync(tuple2.getT2(), tuple2.getT1()))
                 .flatMap(uploadedFile -> Mono.just("Uploaded file size: %s".formatted(uploadedFile.size())))
                 .log()
                 .blockLast();
@@ -64,22 +65,33 @@ public class BackupService {
     }
 
     @SneakyThrows
-    public Mono<RemoteFile> uploadToCloudAsync(File file) {
-        return Mono.fromSupplier(() -> uploadToCloud(file));
+    public Mono<RemoteFile> uploadToCloudAsync(File file, Source source) {
+        return Mono.fromSupplier(() -> uploadToCloud(file, source));
     }
 
     @SneakyThrows
-    public RemoteFile uploadToCloud(File file) {
+    public RemoteFile uploadToCloud(File file, Source source) {
+        log.info("[%s] Uploading to cloud".formatted(source.getCode()));
         var apiClient = pCloudAPIClientFactory.getClient(pCloudAPIAuth.getAccessToken());
         var remoteFile = apiClient.createFile(
                 3008030246L,
-                file.getName(),
+                generateZipFilename(source),
                 DataSource.create(file)
         ).execute();
-
+        log.info("[%s] File uploaded to cloud".formatted(source.getCode()));
         Files.delete(file.toPath());
 
         return remoteFile;
+    }
+
+    private String generateZipFilename(Source source) {
+        return "%s_%s.zip".formatted(getCurrentTimestamp(), source.getCode());
+    }
+
+    private String getCurrentTimestamp() {
+        LocalDateTime ldt = LocalDateTime.now();
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_s");
+        return ldt.format(dtf);
     }
 
     @SneakyThrows
@@ -89,6 +101,7 @@ public class BackupService {
 
     @SneakyThrows
     public File backup(Source db) {
+        log.info("[%s] Start backuping".formatted(db.getCode()));
         Properties properties = new Properties();
         properties.setProperty(MysqlExportService.DB_NAME, db.getName());
         properties.setProperty(MysqlExportService.DB_USERNAME, db.getUsername());
@@ -104,6 +117,7 @@ public class BackupService {
         mysqlExportService.clearTempFiles();
         mysqlExportService.export();
         File file = mysqlExportService.getGeneratedZipFile();
+        log.info("[%s] Backup files generated".formatted(db.getCode()));
         file.deleteOnExit();
         return file;
     }
