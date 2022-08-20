@@ -1,22 +1,11 @@
 package com.example.dbbackuppcloud.service;
 
 import com.example.dbbackuppcloud.config.PCloudConfiguration;
-import com.example.dbbackuppcloud.dto.Notification;
-import com.pcloud.sdk.ApiClient;
-import com.pcloud.sdk.Authenticators;
-import com.pcloud.sdk.PCloudSdk;
-import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service

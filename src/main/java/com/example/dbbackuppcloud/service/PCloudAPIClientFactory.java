@@ -7,22 +7,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
 public class PCloudAPIClientFactory {
-    private Map<String, ApiClient> clients = new ConcurrentHashMap<>();
+    private final Map<String, ApiClient> clients = new ConcurrentHashMap<>();
 
     public ApiClient getClient(String accessToken) {
-        log.info(accessToken);
-        var client = clients.get(accessToken);
-        if (client != null) {
-            return client;
-        }
-        client = createClient(accessToken);
-        clients.put(accessToken, client);
-        return client;
+        return Optional.ofNullable(clients.get(accessToken))
+                .orElseGet(() -> {
+                    var client = createClient(accessToken);
+                    clients.put(accessToken, client);
+                    return client;
+                });
     }
 
     public ApiClient createClient(String accessToken) {

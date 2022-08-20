@@ -30,6 +30,7 @@ public class NotificationService {
                 .message(message)
                 .receivers(receivers)
                 .build();
+
         return webClient
                 .post()
                 .uri(new URI(notificationConfiguration.telegramNotificationServiceUrl()))

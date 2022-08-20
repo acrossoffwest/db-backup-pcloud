@@ -2,32 +2,24 @@ package com.example.dbbackuppcloud.service;
 
 import com.example.dbbackuppcloud.entity.Source;
 import com.example.dbbackuppcloud.repository.SourceRepository;
-import com.pcloud.sdk.ApiError;
 import com.pcloud.sdk.DataSource;
 import com.pcloud.sdk.RemoteFile;
 import com.smattme.MysqlExportService;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.Trigger;
-import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.support.CronExpression;
-import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
-import java.io.IOException;
-import java.time.Instant;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -41,25 +33,33 @@ public class BackupService {
     @Scheduled(cron = "0 * * * * *")
     public void run() {
         if (pCloudAPIAuth.isAuthorized()) {
-            var now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
-            var localDateTimeForNext = LocalDateTime.now().minus(10, ChronoUnit.SECONDS);
-            Flux.fromIterable(sourceRepository.findAll())
-                    .filter(source -> Objects.nonNull(source.getCron()))
-                    .filter(source -> {
-                        var expression = CronExpression.parse(source.getCron());
-                        var next = expression.next(localDateTimeForNext);
-                        log.info("Now: %s == Next: %s".formatted(now, next));
-                        return now.equals(next);
-                    })
-                    .flatMap(this::backupAsync)
-                    .flatMap(this::uploadToCloudAsync)
-                    .flatMap(uploadedFile -> Mono.just("Uploaded file size: %s".formatted(uploadedFile.size())))
-                    .log()
-                    .blockLast();
+            doBackups();
         } else {
-            if (!pCloudAPIAuth.isAuthorizationBegun()) {
-                pCloudAPIAuth.startAuth();
-            }
+            startAuthorization();
+        }
+    }
+
+    private void doBackups() {
+        var now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        var localDateTimeForNext = LocalDateTime.now().minus(10, ChronoUnit.SECONDS);
+        Flux.fromIterable(sourceRepository.findAll())
+                .filter(source -> Objects.nonNull(source.getCron()))
+                .filter(source -> {
+                    var expression = CronExpression.parse(source.getCron());
+                    var next = expression.next(localDateTimeForNext);
+                    log.info("Now: %s == Next: %s".formatted(now, next));
+                    return now.equals(next);
+                })
+                .flatMap(this::backupAsync)
+                .flatMap(this::uploadToCloudAsync)
+                .flatMap(uploadedFile -> Mono.just("Uploaded file size: %s".formatted(uploadedFile.size())))
+                .log()
+                .blockLast();
+    }
+
+    private void startAuthorization() {
+        if (!pCloudAPIAuth.isAuthorizationBegun()) {
+            pCloudAPIAuth.startAuth();
         }
     }
 
@@ -77,7 +77,7 @@ public class BackupService {
                 DataSource.create(file)
         ).execute();
 
-        file.delete();
+        Files.delete(file.toPath());
 
         return remoteFile;
     }
