@@ -16,7 +16,20 @@ MAINTAINER Iurii Karpov <acrossoffwest@gmail.com>
 
 RUN mkdir /app
 WORKDIR /app
-COPY ./ /app
+COPY ./ /app 
+
+RUN mkdir /backuper
+WORKDIR /backuper
+
+RUN apk update && apk upgrade && apk add --no-cache bash git openssh
+
+RUN git clone https://github.com/acrossoffwest/mysql-backup4j.git ./
+RUN git checkout write-batch-inserts-into-file
+COPY ./.mvn /backuper/.mvn
+RUN /app/mvnw -N io.takari:maven:wrapper
+RUN /app/mvnw clean install -DskipTests -Dgpg.skip=true
+
+WORKDIR /app
 
 RUN ./mvnw -DskipTests package
 
@@ -25,4 +38,4 @@ RUN cp ${JAR_FILE} entry.jar
 
 RUN ENVS=$(printenv | sed 's/\(^[^=]*\)=\(.*\)/export \1="\2"/')
 
-CMD $ENVS java -jar /app/entry.jar
+CMD $ENVS java -Xmx10024m -Xms256m -jar /app/entry.jar
