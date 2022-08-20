@@ -25,7 +25,7 @@ public class PCloudAPIAuth {
     @NonNull
     private PCloudConfiguration pCloudConfig;
     @NonNull
-    private WebClient webClient;
+    private NotificationService notificationService;
     private String accessToken;
     private boolean authBegun = false;
 
@@ -35,16 +35,7 @@ public class PCloudAPIAuth {
 
     @SneakyThrows
     public void startAuth() {
-        var message = "Please open link shown below and authorize: [authorize](%s)".formatted(getAuthUrl());
-        log.info(message);
-        var response = webClient
-                .post()
-                .uri(new URI("https://ts3-telegram.aow.space/notifications"))
-                .bodyValue(Notification.builder().message(message).receivers(List.of(236368989)).build())
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-        log.info(response);
+        notificationService.send("Please open link shown below and authorize: [authorize](%s)".formatted(getAuthUrl()));
         authBegun = true;
     }
 
