@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -34,18 +35,31 @@ public class BackupService {
     @Scheduled(cron = "0 * * * * *")
     public void run() {
         if (pCloudAPIAuth.isAuthorized()) {
-            doBackups();
+            makeBackups(sourceRepository.findAll());
         } else {
             startAuthorization();
         }
     }
 
-    private void doBackups() {
+    public void makeBackups(List<Source> sourceList) {
+        makeBackups(sourceList, false);
+    }
+
+    public void makeBackups(List<Source> sourceList, boolean ignoreCronSchedule) {
+        makeBackupsFlux(sourceList, ignoreCronSchedule)
+                .log()
+                .blockLast();
+    }
+
+    public Flux<String> makeBackupsFlux(List<Source> sourceList, boolean ignoreCronSchedule) {
         var now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         var localDateTimeForNext = LocalDateTime.now().minus(10, ChronoUnit.SECONDS);
-        Flux.fromIterable(sourceRepository.findAll())
-                .filter(source -> Objects.nonNull(source.getCron()))
+        return Flux.fromIterable(sourceList)
+                .filter(source -> ignoreCronSchedule || Objects.nonNull(source.getCron()))
                 .filter(source -> {
+                    if (ignoreCronSchedule) {
+                        return true;
+                    }
                     var expression = CronExpression.parse(source.getCron());
                     var next = expression.next(localDateTimeForNext);
                     log.info("Now: %s == Next: %s".formatted(now, next));
@@ -53,9 +67,7 @@ public class BackupService {
                 })
                 .flatMap(source -> Mono.zip(Mono.just(source), backupAsync(source)))
                 .flatMap(tuple2 -> uploadToCloudAsync(tuple2.getT2(), tuple2.getT1()))
-                .flatMap(uploadedFile -> Mono.just("Uploaded file size: %s".formatted(uploadedFile.size())))
-                .log()
-                .blockLast();
+                .flatMap(uploadedFile -> Mono.just("Uploaded file size: %s".formatted(uploadedFile.size())));
     }
 
     private void startAuthorization() {

@@ -1,4 +1,4 @@
-package com.example.dbbackuppcloud.controller;
+package com.example.dbbackuppcloud.http.controller;
 
 import com.example.dbbackuppcloud.service.PCloudAPIAuth;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.example.dbbackuppcloud.controller;
+package com.example.dbbackuppcloud.http.controller;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
